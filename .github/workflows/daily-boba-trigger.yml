@@ -10,28 +10,18 @@ jobs:
   trigger:
     runs-on: ubuntu-latest
     steps:
-      - name: Send Discord message to trigger daily pipeline
+      - name: Send Discord mention to trigger daily pipeline
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
-          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN_FOR_CRON }}
         run: |
-          # Method 1: If webhook URL is set, use webhook
-          if [ -n "$DISCORD_WEBHOOK_URL" ]; then
-            curl -s -X POST "$DISCORD_WEBHOOK_URL" \
-              -H "Content-Type: application/json" \
-              -d '{"content":"跑日報","username":"BOBA Scheduler"}'
-            echo "Sent via webhook"
-
-          # Method 2: If bot token + channel ID are set, send as bot
-          elif [ -n "$DISCORD_BOT_TOKEN" ] && [ -n "$DISCORD_CHANNEL_ID" ]; then
-            curl -s -X POST "https://discord.com/api/v10/channels/${DISCORD_CHANNEL_ID}/messages" \
-              -H "Authorization: Bot ${DISCORD_BOT_TOKEN}" \
-              -H "Content-Type: application/json" \
-              -d '{"content":"跑日報"}'
-            echo "Sent via bot token"
-
-          else
-            echo "::error::No DISCORD_WEBHOOK_URL or DISCORD_BOT_TOKEN_FOR_CRON + DISCORD_CHANNEL_ID configured"
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "::error::DISCORD_WEBHOOK_URL secret not configured"
             exit 1
           fi
+
+          # Mention the bot in channel 1490895377367433278
+          # Bot ID: 1490889625374429306 (AgentBroker)
+          curl -sf -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d '{"content":"<@1490889625374429306> 跑日報","username":"BOBA Scheduler"}'
+          echo "Sent daily trigger mention"
